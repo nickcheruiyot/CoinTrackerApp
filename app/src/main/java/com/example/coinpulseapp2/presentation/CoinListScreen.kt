@@ -1,6 +1,8 @@
 package com.example.coinpulseapp2.presentation
 
+
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,7 +31,10 @@ import coil.request.ImageRequest
 import com.example.coinpulseapp2.domain.model.Coin
 
 @Composable
-fun CoinListScreen(viewModel: CoinViewModel) {
+fun CoinListScreen(
+    viewModel: CoinViewModel,
+    onCoinClick: (String) -> Unit
+) {
     val coins = viewModel.coins.collectAsStateWithLifecycle().value
     val isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value
 
@@ -60,7 +65,10 @@ fun CoinListScreen(viewModel: CoinViewModel) {
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     items(coins) { coin ->
-                        CoinListItem(coin = coin)
+                        CoinListItem(
+                            coin = coin,
+                            onItemClick = { onCoinClick(coin.uuid) } // 👈 navigate to detail
+                        )
                     }
                 }
             }
@@ -69,11 +77,15 @@ fun CoinListScreen(viewModel: CoinViewModel) {
 }
 
 @Composable
-fun CoinListItem(coin: Coin) {
+fun CoinListItem(
+    coin: Coin,
+    onItemClick: (String) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
+            .clickable { onItemClick(coin.uuid) }
     ) {
         // Load SVG + PNG using Coil
         val painter = rememberAsyncImagePainter(
