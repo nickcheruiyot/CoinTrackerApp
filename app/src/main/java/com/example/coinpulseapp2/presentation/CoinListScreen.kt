@@ -1,28 +1,20 @@
 package com.example.coinpulseapp2.presentation
 
-
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
@@ -38,39 +30,49 @@ fun CoinListScreen(
     val coins = viewModel.coins.collectAsStateWithLifecycle().value
     val isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value
 
-    // Fetch coins once when screen loads
+    // Fetch coins once when the screen loads
     LaunchedEffect(Unit) {
         viewModel.fetchCoins()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        when {
-            isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(horizontal = 16.dp)
+    ) {
 
-            coins.isEmpty() -> {
-                Text(
-                    text = "No coins available",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+        Text(
+            text = "Top Coins",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
+        )
 
-            else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp)
-                ) {
-                    items(coins) { coin ->
-                        CoinListItem(
-                            coin = coin,
-                            onItemClick = { onCoinClick(coin.uuid) } // 👈 navigate to detail
-                        )
-                    }
-                }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Name", color = Color.Gray, modifier = Modifier.weight(1.5f))
+            Text(text = "Price", color = Color.Gray, modifier = Modifier.weight(1f))
+            Text(text = "24h", color = Color.Gray, modifier = Modifier.weight(0.7f), textAlign = androidx.compose.ui.text.style.TextAlign.End)
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(coins) { coin ->
+                CoinListItem(coin = coin, onItemClick = { onCoinClick(coin.uuid) })
+            }
+        }
+
+        // loading indicator
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "Loading...", color = Color.White)
             }
         }
     }
@@ -84,10 +86,11 @@ fun CoinListItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable { onItemClick(coin.uuid) }
+            .padding(vertical = 10.dp)
+            .background(Color.Black)
+            .clickable { onItemClick(coin.uuid) },
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Load SVG + PNG using Coil
         val painter = rememberAsyncImagePainter(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(coin.iconUrl)
@@ -96,27 +99,39 @@ fun CoinListItem(
                 .build()
         )
 
+        //  Coin Icon
         Image(
             painter = painter,
             contentDescription = coin.name,
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier
+                .size(32.dp)
+                .padding(end = 12.dp)
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        //  Coin Name
+        Text(
+            text = coin.name,
+            color = Color.White,
+            modifier = Modifier.weight(1.5f),
+            style = MaterialTheme.typography.bodyLarge
+        )
 
-        Column {
-            Text(
-                text = coin.name,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "Price: $${coin.price}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = "Change (24h): ${coin.change}%",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
+        //  Price
+        Text(
+            text = "$${coin.price.take(8)}",
+            color = Color.White,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        //  24h Change (Red if negative, Green if positive)
+        val isNegative = coin.change.startsWith("-")
+        Text(
+            text = "${coin.change}%",
+            color = if (isNegative) Color.Red else Color(0xFF00C853),
+            modifier = Modifier.weight(0.7f),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
     }
 }
