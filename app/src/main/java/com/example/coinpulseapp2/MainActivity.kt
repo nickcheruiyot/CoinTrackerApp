@@ -43,13 +43,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize()
                 ) { coinId ->
                     if (coinId == null) {
-                        // ✅ Show Coin List Screen
+                        //  Show Coin List Screen
                         CoinListScreen(
                             viewModel = viewModel,
                             onCoinClick = { selectedCoinId = it }
                         )
                     } else {
-                        // ✅ Show Coin Detail Screen
+                        // Show Coin Detail Screen
                         CoinDetailScreen(
                             coinId = coinId,
                             repository = repository,
