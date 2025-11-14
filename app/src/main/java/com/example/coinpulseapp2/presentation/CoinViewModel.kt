@@ -1,45 +1,45 @@
 package com.example.coinpulseapp2.presentation
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.coinpulseapp2.data.remote.CoinApiService
-import com.example.coinpulseapp2.data.remote.repository.CoinRepositoryImpl
+import com.example.coinpulseapp2.data.remote.repository.CoinRepository
 import com.example.coinpulseapp2.domain.model.Coin
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-
-class CoinViewModel : ViewModel() {
-
-    // ✅ Build Retrofit + API Service here
-    private val apiService: CoinApiService = Retrofit.Builder()
-        .baseUrl("https://api.coinranking.com/v2/") // Base URL
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(CoinApiService::class.java)
-
-    // ✅ Inject into repository manually
-    private val repository = CoinRepositoryImpl(apiService)
+import android.util.Log
+class CoinViewModel(
+    private val repository: CoinRepository
+) : ViewModel() {
 
     private val _coins = MutableStateFlow<List<Coin>>(emptyList())
-    val coins = _coins.asStateFlow()
+    val coins: StateFlow<List<Coin>> = _coins
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
+    val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun fetchCoins() {
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
+    init {
+        fetchCoins()
+    }
+
+    private fun fetchCoins() {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                _coins.value = repository.getCoins()
+                val coinList = repository.getCoins()
+                Log.d("CoinViewModel", "Fetched coins: ${coinList.size}")
+                _coins.value = coinList
             } catch (e: Exception) {
-                e.printStackTrace()
+                _error.value = e.localizedMessage ?: "An unexpected error occurred"
+                Log.e("CoinViewModel", "Error fetching coins", e)
             } finally {
                 _isLoading.value = false
             }
         }
     }
 }
+

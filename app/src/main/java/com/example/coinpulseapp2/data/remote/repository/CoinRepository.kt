@@ -5,5 +5,5 @@ import com.example.coinpulseapp2.domain.model.CoinDetail
 
 interface CoinRepository {
     suspend fun getCoins(): List<Coin>
-    suspend fun getCoinDetail(coinId: String): CoinDetail
+    suspend fun getCoinDetail(coinId: String): CoinDetail?
 }

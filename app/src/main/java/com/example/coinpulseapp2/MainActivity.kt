@@ -10,22 +10,32 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.coinpulseapp2.data.remote.RetrofitInstance
 import com.example.coinpulseapp2.data.remote.repository.CoinRepositoryImpl
+import com.example.coinpulseapp2.presentation.components.CoinDetailViewModel
+import com.example.coinpulseapp2.presentation.components.CoinDetailViewModelFactory
+import com.example.coinpulseapp2.presentation.navigation.BottomNavigationBar
+import com.example.coinpulseapp2.ui.theme.CoinPulseApp2Theme
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.coinpulseapp2.presentation.CoinDetailScreen
 import com.example.coinpulseapp2.presentation.CoinListScreen
 import com.example.coinpulseapp2.presentation.CoinViewModel
-import com.example.coinpulseapp2.ui.theme.CoinPulseApp2Theme
+import com.example.coinpulseapp2.presentation.CoinViewModelFactory
+import com.example.coinpulseapp2.presentation.FavoritesScreen
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: CoinViewModel by viewModels()
+    // Repository for fetching data
     private val repository by lazy { CoinRepositoryImpl(RetrofitInstance.api) }
+
+    // Coin list ViewModel
+    private val coinViewModel: CoinViewModel by viewModels {
+        CoinViewModelFactory(repository)
+    }
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,32 +43,53 @@ class MainActivity : ComponentActivity() {
         setContent {
             CoinPulseApp2Theme {
                 var selectedCoinId by remember { mutableStateOf<String?>(null) }
+                var selectedTab by remember { mutableStateOf("home") }
 
-                AnimatedContent(
-                    targetState = selectedCoinId,
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(300)) togetherWith
-                                fadeOut(animationSpec = tween(300))
-                    },
-                    modifier = Modifier.fillMaxSize()
-                ) { coinId ->
-                    if (coinId == null) {
-                        //  Show Coin List Screen
-                        CoinListScreen(
-                            viewModel = viewModel,
-                            onCoinClick = { selectedCoinId = it }
-                        )
-                    } else {
-                        // Show Coin Detail Screen
-                        CoinDetailScreen(
-                            coinId = coinId,
-                            repository = repository,
-                            onBackClick = { selectedCoinId = null }
-                        )
+                Scaffold(
+                    bottomBar = {
+                        if (selectedCoinId == null) {
+                            BottomNavigationBar(
+                                selectedTab = selectedTab,
+                                onTabSelected = { selectedTab = it }
+                            )
+                        }
+                    }
+                ) { innerPadding ->
+
+                    AnimatedContent(
+                        targetState = selectedCoinId,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(300)) togetherWith
+                                    fadeOut(animationSpec = tween(300))
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) { coinId ->
+                        if (coinId == null) {
+                            // Show Coin List or Favorites
+                            when (selectedTab) {
+                                "home" -> CoinListScreen(
+                                    viewModel = coinViewModel,
+                                    onCoinClick = { selectedCoinId = it }
+                                )
+                                "favorites" -> FavoritesScreen()
+                            }
+                        } else {
+                            // Coin Detail Screen with its own ViewModel
+                            val coinDetailViewModel: CoinDetailViewModel = viewModel(
+                                factory = CoinDetailViewModelFactory(repository)
+                            )
+
+                            CoinDetailScreen(
+                                coinId = coinId,
+                                viewModel = coinDetailViewModel,
+                                onBackClick = { selectedCoinId = null }
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
-

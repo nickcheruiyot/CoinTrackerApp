@@ -1,5 +1,4 @@
 package com.example.coinpulseapp2.presentation
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -7,32 +6,22 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.example.coinpulseapp2.data.remote.repository.CoinRepository
 import com.example.coinpulseapp2.presentation.components.CoinDetailViewModel
-import com.example.coinpulseapp2.presentation.components.CoinDetailViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoinDetailScreen(
     coinId: String,
-    repository: CoinRepository,
+    viewModel: CoinDetailViewModel,
     onBackClick: () -> Unit
 ) {
-    val viewModel: CoinDetailViewModel = viewModel(
-        factory = CoinDetailViewModelFactory(repository)
-    )
-
     val coinDetail by viewModel.coinDetail.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -67,7 +56,6 @@ fun CoinDetailScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-
                 error != null -> {
                     Text(
                         text = error ?: "Unknown error",
@@ -75,7 +63,6 @@ fun CoinDetailScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-
                 coinDetail != null -> {
                     val coin = coinDetail!!
                     Column(
@@ -108,7 +95,7 @@ fun CoinDetailScreen(
                         Text(text = "Market Cap: $${coin.marketCap}", style = MaterialTheme.typography.bodyLarge)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = coin.description ?: "No description available.",
+                            text = coin.description,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
